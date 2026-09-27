@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>考研英语上岸模拟器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#EDD1D8;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#4a2b35;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding:18px 14px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.t1{font-size:20px;font-weight:700;font-family:"KaiTi","STKaiti",serif;letter-spacing:1px}
+.t2{font-size:11.5px;color:#8a6470;margin-top:2px}
+.pill{background:#c2708c;color:#fff;font-size:12px;padding:5px 10px;border-radius:999px;font-weight:600}
+.card{background:#fff;border-radius:18px;padding:18px 16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(194,112,140,.12)}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:700;color:#fff;background:#c2708c;font-family:inherit;cursor:pointer}
+.btn.ghost{background:#fff;color:#c2708c;border:1.5px solid #e5bfc9}
+.btn.mini{display:inline-block;width:auto;padding:8px 14px;font-size:13px}
+.opt{display:block;width:100%;text-align:left;border:1.5px solid #f0dbe2;background:#fff;border-radius:13px;padding:13px 14px;font-size:14.5px;margin-bottom:9px;color:#4a2b35;font-family:inherit;cursor:pointer;line-height:1.45}
+.opt:active{background:#fbeef2}
+.opt b{color:#c2708c}
+.row{display:flex;gap:10px;margin-top:10px}
+.stbar{margin:7px 0}
+.stl{display:flex;justify-content:space-between;font-size:12px;color:#8a6470;margin-bottom:3px}
+.stl b{color:#4a2b35}
+.bar{height:9px;background:#f6e7ec;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .4s}
+.tag{display:inline-block;background:#fbeef2;color:#c2708c;font-size:11px;padding:3px 9px;border-radius:99px;margin-right:6px;margin-top:8px}
+.ev{font-size:16px;font-weight:700;line-height:1.4}
+.desc{font-size:14.5px;line-height:1.65;color:#5d414b;margin:9px 0 14px}
+.res{font-size:14px;line-height:1.6;color:#8a5a68;background:#fbeef2;border-radius:12px;padding:11px 13px;margin-bottom:12px}
+.foot{font-size:11px;color:#a98492;text-align:center;margin-top:16px;line-height:1.6}
+.delta{font-size:12px;font-weight:700;margin-left:8px}
+.up{color:#4d9e6a}.down{color:#c25b5b}
+.qw{font-size:24px;font-weight:700;font-family:Georgia,serif}
+.ph{font-size:13px;color:#8a6470;margin-top:2px}
+.month{font-size:12px;color:#8a6470}
+.score{display:flex;justify-content:space-around;margin:12px 0}
+.sc{text-align:center}
+.sc b{font-size:22px;display:block}
+.sc span{font-size:11px;color:#8a6470}
+.emoji-big{font-size:52px;text-align:center;margin:6px 0}
+.endt{font-size:24px;font-weight:800;text-align:center;font-family:"KaiTi","STKaiti",serif;letter-spacing:2px}
+.fate{font-size:14px;line-height:1.7;text-align:center;color:#5d414b;margin:10px 0}
+canvas{width:100%;border-radius:14px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ================== 考研英语上岸模拟器 · demo v1 ==================
+   概念：东舟路线「流量优先」——马斯克/班主任式剧情模拟器 × 考研。
+   开局定命 → 30+ 张事件卡（毒舌日常 + 考研英语词根题彩蛋）→
+   四属性（心态/进度/头发/存款）→ 考试日估分 → 七种结局 → 分享图。
+   英语题词根与考研母库同源（spect/dict/fer/dur…），玩着玩着背了单词。 */
+
+var app = document.getElementById("app");
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+/* ---------- 考研英语题（词根族，答错送词根讲解） ---------- */
+var ENQ = [
+ {w:"prospect", ph:"/ˈprɒspekt/", o:["前景；展望","繁荣","提议","期望值"], a:0, tip:"spect＝看。pro（向前）＋spect（看）→ 往前看的东西＝「前景」。考研阅读里 prospect of doing＝做某事的前景。"},
+ {w:"contradict", ph:"/ˌkɒntrəˈdɪkt/", o:["与…矛盾；反驳","口述","预测","反对投票"], a:0, tip:"dict＝说。contra（相反）→ 反着说＝「矛盾」。作者态度题最爱：contradict the previous view。"},
+ {w:"transfer", ph:"/trænsˈfɜː/", o:["转移；转乘","改革","透明","变形"], a:0, tip:"fer＝带、搬。trans（过去）→ 搬过去＝「转移」。transfer to another school＝转学。"},
+ {w:"inspect", ph:"/ɪnˈspekt/", o:["检查；视察","尊重","注视","期待"], a:0, tip:"spect＝看。in（往里）→ 看进去＝「检查」。inspect the factory＝视察工厂。"},
+ {w:"durable", ph:"/ˈdjʊərəbl/", o:["耐用的","期间","重复的","持续的时间"], a:0, tip:"dur＝持久 → 能持久＝「耐用」。durable goods＝耐用品，真题阅读高频。"},
+ {w:"maintain", ph:"/meɪnˈteɪn/", o:["维持；坚称","放弃","反对","遗留"], a:0, tip:"tain＝拿住。main（手）→ 用手拿住＝「维持」。maintain that…＝坚持认为，作者观点题信号词。"},
+ {w:"submit", ph:"/səbˈmɪt/", o:["提交；服从","转让","容忍","传输"], a:0, tip:"mit/miss＝送。sub（下面）→ 送到上级手里＝「提交」。submit a paper＝交论文。"},
+ {w:"compress", ph:"/kəmˈpres/", o:["压缩","压力","印象","表达"], a:0, tip:"press＝压。com（一起）→ 往一起压＝「压缩」。compressed schedule＝压缩的日程。"},
+ {w:"reform", ph:"/rɪˈfɔːm/", o:["改革；改良","执行","信息","正规"], a:0, tip:"form＝形状。re（重新）→ 重新塑形＝「改革」。education reform＝教育改革。"},
+ {w:"export", ph:"/ɪkˈspɔːt/", o:["出口","进口","输送","爆发"], a:0, tip:"port＝搬运。ex（向外）→ 搬出去＝「出口」。反义 import（im＝向内）。"},
+ {w:"interrupt", ph:"/ˌɪntəˈrʌpt/", o:["打断","休息","腐败","相互"], a:0, tip:"rupt＝破裂。inter（中间）→ 从中间破开＝「打断」。interrupt the silence。"},
+ {w:"inspire", ph:"/ɪnˈspaɪə/", o:["鼓舞；启发","呼吸","出汗","渴望"], a:0, tip:"spir＝呼吸。in（吸进）→ 把气吹进去＝「鼓舞」。be inspired by＝受…启发。"},
+ {w:"prevent", ph:"/prɪˈvent/", o:["阻止","发明","事件","走向"], a:0, tip:"vent＝来。pre（提前）→ 提前赶到＝「阻止」。prevent…from doing＝阻止做某事。"},
+ {w:"insist", ph:"/ɪnˈsɪst/", o:["坚持说；坚决要求","存在","抵抗","站立"], a:0, tip:"sist＝站。in（上面）→ 站在原地不动＝「坚持」。insist on＝坚决要求。"},
+ {w:"betray", ph:"/bɪˈtreɪ/", o:["背叛；泄露","燃烧","运送","预言"], a:0, tip:"tray＝交付 → 把秘密交出去＝「背叛」。betray one's trust＝辜负信任。"},
+ {w:"suspend", ph:"/səˈspend/", o:["暂停；悬挂","花费","依赖","回应"], a:0, tip:"pend＝悬挂 → 吊在半空＝「暂停」。suspended sentence＝缓刑（真题出现过）。"}
+];
+
+/* ---------- 里程碑剧情（固定时间点） ---------- */
+var FIX = [
+ {r:0, m:"3月", e:"📦 开学第一课：买资料", d:"图书馆门口摆满了一整套『考研全家桶』，老板说今年涨价了。", c:[
+   {l:"全套正版抱回家（-25 存款）", f:{m:-25,p:8}, r:"书到了。回本的方式只有一种：考上。"},
+   {l:"只买真题 + 单词书（-10 存款）", f:{m:-10,p:5}, r:"穷人打法，真题为王。"},
+   {l:"电子版白嫖", f:{m:0,p:2,x:-2}, r:"找资源找了两小时，比背单词还累。"} ]},
+ {r:5, m:"6月", e:"📚 期末周撞上复习期", d:"老师说这门课点名三次不到挂科。你翻开单词书的手停在半空。", c:[
+   {l:"白天上课晚上复习", f:{h:-5,p:4,x:-3}, r:"你是全教室最困但最清醒的人。"},
+   {l:"期末划水，保考研", f:{p:7,x:-2}, r:"绩点是什么？能加初试分吗。"},
+   {l:"两手抓，两手都硬", f:{p:3,h:-3,x:-2}, r:"你确实都抓了，头发也确实都掉了。"} ]},
+ {r:8, m:"8月", e:"☀️ 暑假黄金期", d:"40℃ 的夏天，自习室没有空调，只有你和 300 个卷王。", c:[
+   {l:"留校，死磕自习室", f:{h:-6,p:9}, r:"八月流过的汗，是十二月吹过的牛。"},
+   {l:"回家学", f:{p:3,x:5}, r:"家里的床是有引力的。你学了三天，躺了四天。"},
+   {l:"出去旅游一周", f:{m:-15,x:10,p:-4}, r:"充电一周，回来更狠。——你是这么安慰自己的。"} ]},
+ {r:11, m:"9月", e:"📢 招生简章出来了", d:"目标院校：缩招 5 人，专业课换了两本参考书。群里已经炸了。", c:[
+   {l:"硬着头皮冲", f:{x:-8,p:5}, r:"缩招缩的是别人，急的是你。"},
+   {l:"连夜换目标院校", f:{x:3,p:-4}, r:"选择大于努力——你第一次信了这句话。"},
+   {l:"假装没看见", f:{x:-5}, r:"不看它就不存在吗？不。但今晚能睡个好觉。"} ]},
+ {r:13, m:"9月", e:"📝 预报名开始了", d:"研友群突然安静，然后有人冒泡：『你报名没？？』", c:[
+   {l:"手速拉满，一次填对", f:{x:6}, r:"考点选到本校，运气值 +1。"},
+   {l:"差点忘了，被喊回来", f:{x:-6}, r:"差点白学八个月。惊魂未定，背书去。"},
+   {l:"纠结半天选考点", f:{x:4}, r:"选了离家近的。家长直呼懂事。"} ]},
+ {r:17, m:"10月", e:"🖼️ 网上确认照片", d:"系统提示：该照片将出现在准考证与考场名单上，供监考老师比对。", c:[
+   {l:"用三年前的证件照", f:{x:2}, r:"监考老师：这是本人吗？是，是当年那版的你。"},
+   {l:"现拍素颜", f:{x:-4}, r:"镜头是最诚实的，发际线是最真实的。"},
+   {l:"花 30 块精修", f:{m:-5,x:5}, r:"P 图 30 块，买回一点尊严，值。"} ]},
+ {r:20, m:"11月", e:"📕 肖八到货", d:"全家都在等你做完肖八。选择题 28 分，你盯着分数沉默了很久。", c:[
+   {l:"哭完继续刷选择", f:{x:-8,p:4}, r:"肖老说过：八套卷是查漏的，不是让你流泪的。"},
+   {l:"稳了，35+", f:{x:8,p:4}, r:"选择 35+，你在群里低调地发了句『还行』。"},
+   {l:"大题先放放，只刷选择", f:{p:3}, r:"很清醒的打法。大题？后面还有肖四呢。"} ]},
+ {r:22, m:"11月", e:"🏨 订考场酒店", d:"考点旁边的小旅馆，平时 128，考研那两天 688。", c:[
+   {l:"咬牙订 688 的", f:{m:-20,x:4}, r:"钱没了可以再赚，午休没了直接爆炸。"},
+   {l:"订两公里外 168 的", f:{m:-8,x:-2}, r:"考试当天你顶着寒风狂奔 20 分钟。"},
+   {l:"找研友拼房", f:{m:-4,x:3,p:-1}, r:"凌晨一点，你俩还在互抽政治大题。"} ]},
+ {r:26, m:"12月", e:"📗 肖四到货", d:"全中国考研人同时在快递点蹲同一种货。", c:[
+   {l:"大题全背", f:{p:8,h:-6}, r:"背完肖四第一套，你走路都在念『新时代……』"},
+   {l:"只背前两套", f:{p:4,x:-3}, r:"赌狗行为。但肖老毕竟姓肖，不姓赌。"},
+   {l:"跟着带背音频玄学押题", f:{x:2,p:-2}, r:"带背老师声音很好听，考点押得很玄。"} ]},
+ {r:29, m:"12月", e:"🌙 考前最后一晚", d:"凌晨 2:47，你把政治带背听到第三遍，越听越清醒。", c:[
+   {l:"再听一遍，就一遍", f:{x:-6,p:2}, r:"第四遍也没睡着。但单词倒是全记住了。"},
+   {l:"吞半片褪黑素强制关机", f:{x:5}, r:"睡了六个小时，考场上一战封神。"},
+   {l:"躺着刷手机到三点", f:{x:-4,p:-2}, r:"刷到的全是『考研人最后一天』，越刷越精神。"} ]}
+];
+
+/* ---------- 日常随机事件 ---------- */
+var EVENTS = [
+ {m:"4月", e:"🏠 室友保研了", d:"朋友圈写着『感恩遇见，未来可期』，定位是导师办公室。", c:[
+   {l:"真诚点赞，回去学习", f:{x:-6,p:6}, r:"赞是真心的，酸也是真心的。背书。"},
+   {l:"关机猛学两小时", f:{p:10,h:-3,x:-3}, r:"不服就干。单词量今日 +80。"},
+   {l:"评论『保研的哪有考研的牛』", f:{x:6,p:-2}, r:"爽完了。但明天见了面还是有点尴尬。"} ]},
+ {m:"4月", e:"🪑 图书馆占座", d:"6:55，图书馆门口排到了第 41 位。开门时你听见脚步声如潮。", c:[
+   {l:"明早 6:50 起冲", f:{h:-4,p:5}, r:"你抢到了。抢座这场仗，你全胜。"},
+   {l:"换个没人的自习室", f:{x:-2}, r:"没人的地方……也没有学习的氛围。"},
+   {l:"收藏《占座攻略》", f:{x:1}, r:"收藏 ＝ 学过。你都知道。"} ]},
+ {m:"5月", e:"📞 妈妈来电话了", d:"『吃得好吗？』『考不上也没事哈。』你的鼻子突然就酸了。", c:[
+   {l:"报喜不报忧", f:{x:-5}, r:"『挺好的。』挂了电话，眼睛红红的。"},
+   {l:"说了实话：有点难", f:{x:8}, r:"『没事哈，家里永远有你碗饭。』你在电话这头哭了，又充满了电。"},
+   {l:"聊十分钟就挂", f:{p:-3,x:4}, r:"省下来的时间背了 20 个词。妈妈的语气有点失落。"} ]},
+ {m:"5月", e:"🛒 双十一购物车", d:"购物车里躺着三本资料、一个坐垫、还有一件『上岸战袍』。", c:[
+   {l:"资料全买", f:{m:-12,p:4}, r:"买的时候觉得自己是学霸，拆快递的时候才想起来看不完。"},
+   {l:"只买了草稿纸", f:{m:-2}, r:"实用主义。数学草稿纸确实是消耗品。"},
+   {l:"全部移出购物车", f:{x:3}, r:"省下的钱，考完试买漂亮衣服。"} ]},
+ {m:"6月", e:"💬 同学劝你考公", d:"『考研不如考公，宇宙的尽头是编制。』他考上了老家税务局。", c:[
+   {l:"『我命由我不由天』", f:{x:6}, r:"喊完这句，你把『行测』从购物车删了。"},
+   {l:"半夜偷偷搜考公条件", f:{x:-8,p:-2}, r:"搜完更焦虑了：考公也卷。回来接着背单词。"},
+   {l:"反手发他一篇考研上岸帖", f:{x:4}, r:"他说『加油』。你俩都报了班，互不打扰。"} ]},
+ {m:"7月", e:"🤒 感冒发烧", d:"38.2℃，喉咙像吞了刀片，单词书上的字都在跳舞。", c:[
+   {l:"硬扛，继续学", f:{h:-6,x:-4}, r:"效率 20%，头发 30%。不值当。"},
+   {l:"去医院", f:{m:-15,p:-4,x:6}, r:"医生说考研人十个九个这个状态。输完液像换了个人。"},
+   {l:"泡热水澡早睡", f:{p:-3,h:2}, r:"第二天好了大半。身体是革命的本钱。"} ]},
+ {m:"7月", e:"☕ 咖啡续命", d:"一天三杯美式，心跳快得像在背口语。", c:[
+   {l:"再来一杯", f:{h:-5,p:6,m:-4}, r:"今夜无人入睡。明早黑眼圈 +1。"},
+   {l:"换成茶", f:{p:2}, r:"温和续航。起码心跳正常了。"},
+   {l:"戒了，多喝水", f:{x:-3,h:4}, r:"戒断反应两天，之后神清气爽。"} ]},
+ {m:"9月", e:"📱 又搜『来得及吗』", d:"深夜，你打开小红书，输入：九月开始考研来得及吗。", c:[
+   {l:"关掉 APP 去背单词", f:{x:5,p:5}, r:"来得及来不及，单词不会自己进脑子。"},
+   {l:"越搜越焦虑", f:{x:-10}, r:"看了一晚上『三本逆袭 985』，觉得自己完了。"},
+   {l:"在评论区找个搭子", f:{x:2,p:-1}, r:"搭子已找到，凌晨一点还在线，可以互卷。"} ]},
+ {m:"10月", e:"🧴 腰开始疼了", d:"坐了八小时，站起来的时候腰发出了 年久失修的声音。", c:[
+   {l:"站着背书", f:{p:4,x:-2}, r:"走廊尽头新添了一个来回踱步的身影，是你。"},
+   {l:"买人体工学坐垫", f:{m:-8,x:5}, r:"1000 块的坐垫，3000 块的腰。算了，坐着吧。"},
+   {l:"躺平一天", f:{p:-6,x:4}, r:"躺是真的爽，落下的进度也是真的。"} ]},
+ {m:"10月", e:"😢 研友退坑了", d:"『我决定去工作了，考研太苦了。』他说完就删了背单词打卡群。", c:[
+   {l:"拉住他，谈谈", f:{x:2,p:-2}, r:"聊了一小时，他没回来，但你更坚定了。"},
+   {l:"尊重祝福", f:{x:-5}, r:"自习室又空了一个位子。有点冷。"},
+   {l:"互相打气：都上岸", f:{x:8}, r:"他说好。第三天他又默默回来了，谁都没提。"} ]},
+ {m:"11月", e:"✍️ 英语作文怎么办", d:"阅读稳了，作文还没头绪。小作文格式都记不全。", c:[
+   {l:"背 20 篇范文", f:{p:7,h:-3}, r:"背到第八篇，你开始梦见自己在默写。"},
+   {l:"买高级模板", f:{m:-10,p:5}, r:"模板到了，‘as is vividly shown’ 张口就来。"},
+   {l:"考前一周再说", f:{x:-4}, r:"后来那一周，你既背肖四又背作文，头皮发麻。"} ]},
+ {m:"11月", e:"📖 专业课背了就忘", d:"背了三遍，合上书，脑子里只剩第一章标题。", c:[
+   {l:"上艾宾浩斯表格", f:{p:8,h:-4}, r:"复习计划精确到小时。人变成了表格的形状。"},
+   {l:"疯狂抄书", f:{h:-6,p:5}, r:"抄完半本，笔芯用了五根。手比脑子记得牢。"},
+   {l:"摆烂半天", f:{p:-5,x:3}, r:"看了两集下饭综艺，带着愧疚感满血复活。"} ]},
+ {m:"10月", e:"💼 本科同学晒 offer", d:"月薪 15k，配文『生活明朗，万物可爱』。", c:[
+   {l:"屏蔽朋友圈", f:{x:5}, r:"眼不见心不烦。 December 见。"},
+   {l:"深夜 emo", f:{x:-8}, r:"emo 到凌晨，第二天顶着肿眼泡背了 300 词。"},
+   {l:"把他头像设成动力", f:{x:3,p:2}, r:"每学不动了就看一眼。玄学但有用。"} ]},
+ {m:"11月", e:"☎️ 家里问进度", d:"爸爸：『复习得咋样了？』这句轻飘飘的话，重得像肖四全套。", c:[
+   {l:"『稳得很』", f:{x:-2}, r:"说出口才觉得，好像真的也没那么慌。"},
+   {l:"发了张学习计划表", f:{x:6}, r:"爸爸回了三个字：『好样的』。你干劲拉满。"},
+   {l:"已读不回", f:{x:-4}, r:"晚上妈妈转了 500 块：『买点好吃的。』你更慌了。"} ]},
+ {m:"10月", e:"🎫 秋招 offer 递到面前", d:"HR 说：明天签约，过时不候。而你的考研，还有 70 天。", c:[
+   {l:"撕掉 offer，冲刺上岸", f:{x:8,p:3}, r:"撕得很帅。现在，只能一条路走到黑了。"},
+   {l:"留着保底，两边兼顾", f:{x:-3,p:-2}, r:"脚踏两条船的下场：进度 -10%，心态 -20%。"},
+   {l:"去他的考研，直接上班", f:{quit:1}, r:"……"} ]},
+ {m:"12月", e:"❄️ 考场外的弃考潮", d:"新闻说：某考点 30 人，弃考 7 个。你摸了摸自己的准考证。", c:[
+   {l:"深呼吸，走进考场", f:{x:8,p:2}, r:"你坐下的时候，旁边正好空着 3 个座位。你不会是下一个。"},
+   {l:"给自己买了热咖啡", f:{x:5,m:-2}, r:"手暖了，字都能写直了。"} ]}
+];
+
+/* ---------- 开局定命 ---------- */
+var GOALS = [
+ {l:"🎯 冲名校（清北复交档）", line:390, name:"名校冲锋型", tag:"初试线 390"},
+ {l:"🏫 稳 985 / 211", line:360, name:"稳妥上岸型", tag:"初试线 360"},
+ {l:"🌱 双非逆袭", line:330, name:"逆袭剧本型", tag:"初试线 330"}
+];
+var HOURS = [
+ {l:"🌙 佛系三小时", v:"佛系选手", desc:"学是学了，没完全学"},
+ {l:"⏰ 常规六小时", v:"规律型选手", desc:"图书馆钉子户"},
+ {l:"🔥 卷王九小时", v:"卷王本王", desc:"图书馆闭馆音乐都认得你"}
+];
+var PHONE = [
+ {l:"🌲 装了专注 APP", v:"自律装机版", desc:"Forest 树都种成森林了"},
+ {l:"📵 半机半学", v:"半卷半躺版", desc:"学一小时，刷半小时"},
+ {l:"🤳 刷到停不下来", v:"重度网瘾版", desc:"『考研来得及吗』专业十级学者"}
+];
+
+/* ---------- 状态 ---------- */
+var S = {stage:"intro", goal:0, hours:1, phone:1, st:{x:70,p:10,h:100,m:100}, round:0, right:0, wrong:0, queue:[], hist:[], pick:0};
+
+var MONTHS = ["3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+var TOTAL = 31;   // 第 0~29 轮事件 + 考试日(第30)
+
+function monthOf(r){
+  var idx = Math.min(9, Math.floor(r / TOTAL * 9.4));
+  return MONTHS[idx];
+}
+
+/* ---------- 渲染 ---------- */
+function header(month){
+  return '<div class="top"><div><div class="t1">考研英语上岸模拟器</div><div class="t2">' + esc(month) + ' · 你的考研命运行中</div></div><div class="pill">第 ' + (S.round + 1) + " / " + TOTAL + " 天</div></div>";
+}
+function bars(){
+  var s = S.st;
+  function bar(name, v, c){
+    return '<div class="stbar"><div class="stl"><b>' + name + "</b><span>" + Math.round(v) + "</span></div><div class=\"bar\"><i style=\"width:" + clamp(v,0,100) + "%;background:" + c + '"></i></div></div>';
+  }
+  return bar("🙂 心态", s.x, "#e8a33d") + bar("📈 进度", s.p, "#c2708c") + bar("💇 头发", s.h, "#7f8fb5") + bar("💰 存款", s.m, "#5da27a");
+}
+function deltaHTML(f){
+  var map = {x:"心态", p:"进度", h:"头发", m:"存款"};
+  var out = "";
+  for (var k in f){ if (k === "quit") continue;
+    var v = f[k]; if (!v) continue;
+    out += '<span class="delta ' + (v > 0 ? "up" : "down") + '">' + map[k] + (v > 0 ? "+" : "") + v + "</span> ";
+  }
+  return out;
+}
+function applyF(f){
+  if (f.quit) return;
+  S.st.x = clamp(S.st.x + (f.x || 0), 0, 100);
+  S.st.p = clamp(S.st.p + (f.p || 0), 0, 100);
+  S.st.h = clamp(S.st.h + (f.h || 0), 0, 100);
+  S.st.m = clamp(S.st.m + (f.m || 0), 0, 100);
+}
+
+function renderIntro(){
+  var plays = 0;
+  try { plays = Number(localStorage.getItem("ksim_plays") || 0); } catch(e){}
+  var h = '<div class="top"><div><div class="t1">考研英语上岸模拟器</div><div class="t2">H5 · 免安装 · 玩一遍你的一年</div></div><div class="pill">demo</div></div>';
+  h += '<div class="card"><div class="emoji-big">🎓</div>';
+  h += '<div class="endt">考研英语上岸模拟器</div>';
+  h += '<div class="fate">用 5 分钟，过一遍你的考研一年。<br>定一个命，抽 30 张卡，走到 12 月的考场。<br>考的是英语，玩的是心跳。</div>';
+  if (plays > 0) h += '<div style="text-align:center;font-size:12px;color:#8a6470">你已经重开 ' + plays + " 次了。这次能上岸吗？</div>";
+  h += '<div style="margin-top:12px"><button class="btn" id="go">开始 · 生成我的考研命</button></div></div>';
+  h += '<div class="foot">四条命：心态 / 进度 / 头发 / 存款<br>走到考场算总分，也能中途「提前退场」<br>考研英语真题词根已混入卡池，答错送讲解</div>';
+  app.innerHTML = h;
+  document.getElementById("go").onclick = function(){ S.stage = "setup"; S.pick = 0; renderSetup(); };
+}
+
+function renderSetup(){
+  var h = '<div class="top"><div><div class="t1">生成考研命</div><div class="t2">三个选择，决定你这一年的命格</div></div><div class="pill">定命</div></div>';
+  h += '<div class="card"><div class="ev">① 目标院校</div>';
+  for (var i=0;i<GOALS.length;i++) h += optBtn("g", i, GOALS[i].l, S.goal === i);
+  h += "</div>";
+  h += '<div class="card"><div class="ev">② 每天学多久</div>';
+  for (i=0;i<HOURS.length;i++) h += optBtn("h", i, HOURS[i].l, S.hours === i);
+  h += "</div>";
+  h += '<div class="card"><div class="ev">③ 手机自制力</div>';
+  for (i=0;i<PHONE.length;i++) h += optBtn("p", i, PHONE[i].l, S.phone === i);
+  h += "</div>";
+  h += '<button class="btn" id="born">🎯 我的考研命，就这样定了</button>';
+  h += '<div class="foot">命格会影响结局门槛、事件伤害和考试估分——不服就重开</div>';
+  app.innerHTML = h;
+  app.querySelectorAll("[data-gp]").forEach(function(b){
+    b.onclick = function(){
+      var k = b.getAttribute("data-gp"), v = Number(b.getAttribute("data-v"));
+      if (k === "g") S.goal = v; else if (k === "h") S.hours = v; else S.phone = v;
+      renderSetup();
+    };
+  });
+  document.getElementById("born").onclick = function(){
+    S.st = {x:70, p:10, h:100, m:100};
+    if (S.hours === 2){ S.st.p += 6; S.st.h -= 8; }
+    if (S.hours === 0){ S.st.p -= 4; S.st.x += 5; }
+    if (S.phone === 2){ S.st.x -= 6; }
+    if (S.phone === 0){ S.st.x += 4; }
+    buildQueue();
+    S.round = 0; S.right = 0; S.wrong = 0; S.hist = [];
+    S.stage = "run";
+    renderCard();
+  };
+}
+function optBtn(k, v, label, on){
+  return '<button class="opt" data-gp="' + k + '" data-v="' + v + '" style="' + (on ? "border-color:#c2708c;background:#fbeef2;font-weight:700" : "") + '">' + label + (on ? " ✓" : "") + "</button>";
+}
+
+function buildQueue(){
+  var g = shuffle(EVENTS.slice()), q = shuffle(ENQ.slice()), fix = FIX.slice();
+  var gi = 0, ei = 0;
+  S.queue = [];
+  for (var r = 0; r < TOTAL; r++){
+    if (fix.length && r === fix[0].r){ S.queue.push({ ev: fix.shift(), fix: 1 }); continue; }
+    var useEn;
+    if (ei >= q.length) useEn = false;
+    else if (gi >= g.length) useEn = true;
+    else useEn = (r % 2 === 1);      // 奇数轮塞英语题，让题量稳定
+    if (useEn){ S.queue.push({en:q[ei]}); ei++; } else { S.queue.push({ev:g[gi]}); gi++; }
+  }
+}
+
+function renderCard(){
+  if (S.round >= TOTAL){ return renderExam(); }
+  var item = S.queue[S.round];
+  var h = header(monthOf(S.round));
+  h += '<div class="card">' + bars() + "</div>";
+  if (item.en){
+    var q = item.en;
+    item.ord = shuffle([0,1,2,3]);          // 选项每局洗牌，正确项位置不可预测
+    h += '<div class="card"><span class="tag">考研英语 · 词根题</span><span class="tag">答对加心态和进度</span>';
+    h += '<div style="margin-top:10px"><div class="qw">' + q.w + '</div><div class="ph">' + q.ph + " —— 考研阅读里，它是啥意思？</div></div>";
+    h += '<div style="margin-top:12px">';
+    for (var i=0;i<item.ord.length;i++) h += '<button class="opt" data-q="' + i + '">' + esc(q.o[item.ord[i]]) + "</button>";
+    h += "</div></div>";
+  } else {
+    var ev = item.ev;
+    h += '<div class="card"><span class="tag">' + esc(monthOf(S.round)) + " 事件</span>";
+    h += '<div class="ev" style="margin-top:8px">' + esc(ev.e) + '</div><div class="desc">' + esc(ev.d) + "</div>";
+    for (var j=0;j<ev.c.length;j++) h += '<button class="opt" data-c="' + j + '">' + esc(ev.c[j].l) + "</button>";
+    h += "</div>";
+  }
+  h += '<div class="foot">心态归零 / 头发掉光 / 存款花完 → 提前退场</div>';
+  app.innerHTML = h;
+  app.querySelectorAll("[data-q]").forEach(function(b){ b.onclick = function(){ answerEn(Number(b.getAttribute("data-q"))); }; });
+  app.querySelectorAll("[data-c]").forEach(function(b){ b.onclick = function(){ pickEv(Number(b.getAttribute("data-c"))); }; });
+}
+
+function answerEn(i){
+  var item = S.queue[S.round], q = item.en, ok = (i === item.ord.indexOf(q.a));
+  var h = header(monthOf(S.round)) + '<div class="card">' + bars() + "</div>";
+  h += '<div class="card"><span class="tag">考研英语 · 词根题</span>';
+  h += '<div style="margin-top:10px"><div class="qw">' + q.w + '</div><div class="ph">' + q.ph + "</div></div>";
+  h += '<div style="margin-top:10px" class="res">' + (ok ? "✅ 答对了！" : "❌ 答错了（正确答案：" + esc(q.o[q.a]) + "）") + deltaHTML(ok ? {x:4,p:3} : {x:-4}) + "</div>";
+  h += '<div class="res" style="background:#f4f7fb">💡 ' + esc(q.tip) + "</div>";
+  applyF(ok ? {x:4,p:3} : {x:-4});
+  if (ok) S.right++; else S.wrong++;
+  h += nextBtn();
+  app.innerHTML = h;
+  bindNext();
+}
+
+function pickEv(ci){
+  var ev = S.queue[S.round].ev, ch = ev.c[ci];
+  if (ch.f.quit) return renderQuit();
+  var h = header(monthOf(S.round)) + '<div class="card">' + bars() + "</div>";
+  h += '<div class="card"><span class="tag">' + esc(monthOf(S.round)) + " 事件</span>";
+  h += '<div class="ev" style="margin-top:8px">' + esc(ev.e) + "</div>";
+  h += '<div style="margin-top:10px" class="res">' + esc(ch.r) + deltaHTML(ch.f) + "</div>";
+  applyF(ch.f);
+  S.hist.push(ev.e);
+  h += nextBtn();
+  app.innerHTML = h;
+  bindNext();
+}
+
+function nextBtn(){ return '<div style="margin-top:4px"><button class="btn" id="nx">' + (S.round + 1 >= TOTAL ? "🎫 走，进考场" : "继续 → 第 " + (S.round + 2) + " 天") + "</button></div>"; }
+function bindNext(){
+  document.getElementById("nx").onclick = function(){
+    var dead = checkDead();
+    if (dead) return renderDead(dead);
+    S.round++;
+    renderCard();
+  };
+}
+function checkDead(){
+  if (S.st.x <= 0) return {e:"😵‍💫", t:"心态崩了", d:"你在自习室哭了三次之后，收拾东西回家了。12 月的考场，你缺席了。"};
+  if (S.st.h <= 0) return {e:"🧑‍🦲", t:"头发掉光了", d:"梳子上再也没有头发可掉。医生建议：先养身体，明年再战。"};
+  if (S.st.m <= 0) return {e:"💸", t:"存款花完了", d:"资料、辅导班、688 的酒店……钱包先于梦想破产。你含泪签了份工作。"};
+  return null;
+}
+
+function renderQuit(){
+  finishPlay();
+  renderEnd({e:"💼", t:"提前就业结局", d:"你签了 offer，删除了背单词 APP，世界突然安静了。<br>工位上，你刷到有人晒拟录取通知——愣了三秒，然后继续改方案。", quit:1});
+}
+
+function renderDead(d){
+  finishPlay();
+  renderEnd(d);
+}
+
+/* ---------- 考试日 ---------- */
+function renderExam(){
+  var g = GOALS[S.goal];
+  var eng = clamp(Math.round(35 + S.st.p * 0.45 + S.right * 1.8 + (S.phone === 0 ? 2 : 0)), 22, 92);
+  var pol = clamp(Math.round(58 + S.st.x * 0.18), 50, 78);
+  var pro = clamp(Math.round(92 + S.st.p * 0.32), 92, 128);
+  var total = eng + pol + pro;
+  S.exam = {eng:eng, pol:pol, pro:pro, total:total};
+  var h = header("12月 · 考试日");
+  h += '<div class="card"><div class="emoji-big">🎫</div><div class="endt">考 试 日</div>';
+  h += '<div class="fate">第一科：英语。监考老师把你那 P 过的照片看了两眼。<br>交卷铃响的那一刻，你的考研一年结束了。</div>';
+  h += '<div class="score"><div class="sc"><b>' + eng + "</b><span>英语</span></div><div class=\"sc\"><b>" + pol + "</b><span>政治</span></div><div class=\"sc\"><b>" + pro + "</b><span>专业课</span></div><div class=\"sc\"><b style=\"color:#c2708c\">" + total + "</b><span>总分</span></div></div>";
+  h += '<div style="text-align:center;font-size:12.5px;color:#8a6470">目标线 ' + g.line + " · 词根题答对 " + S.right + " / " + (S.right + S.wrong) + "</div>";
+  h += '<div style="margin-top:14px"><button class="btn" id="fin">查分 →</button></div></div>';
+  h += '<div class="foot">估分模型：进度 + 词根题答对数 + 命格修正（demo 仅供娱乐）</div>';
+  app.innerHTML = h;
+  document.getElementById("fin").onclick = function(){ renderScore(total, g); };
+}
+
+function renderScore(total, g){
+  var end;
+  if (total >= g.line + 2) end = {e:"🎉", t:"上岸了", d:"拟录取三个字，比这十一个月所有单词都好看。<br>你给妈妈打电话，第一句是：『妈，你女儿/儿子要读研了。』"};
+  else if (total >= g.line - 14) end = {e:"🥲", t:"擦线，调剂", d:"差一点点。调剂系统你填了 37 所学校，<br>最后去了一所你查地图才知道在哪的大学。"};
+  else end = {e:"🔁", t:"二战吧", d:"差 " + (g.line - total) + " 分。『二战』两个字写起来很快，<br>读起来，又是三百天。"};
+  finishPlay();
+  renderEnd(end);
+}
+
+/* ---------- 结局 ---------- */
+function finishPlay(){
+  try {
+    var n = Number(localStorage.getItem("ksim_plays") || 0) + 1;
+    localStorage.setItem("ksim_plays", String(n));
+  } catch(e){}
+}
+
+function renderEnd(end){
+  var g = GOALS[S.goal];
+  var fate = g.name + " · " + HOURS[S.hours].v + " · " + PHONE[S.phone].v;
+  var h = '<div class="top"><div><div class="t1">结局</div><div class="t2">你的考研命 · 已结算</div></div><div class="pill">第 ' + (S.round + 1) + " 天</div></div>";
+  h += '<div class="card"><div class="emoji-big">' + end.e + '</div><div class="endt">' + esc(end.t) + "</div>";
+  h += '<div class="fate">' + end.d + "</div>";
+  h += '<div style="text-align:center;margin:4px 0 10px"><span class="tag">' + esc(g.l) + "</span><span class=\"tag\">" + fate + "</span></div>";
+  h += bars();
+  if (!end.quit) h += '<div style="text-align:center;font-size:12.5px;color:#8a6470;margin-top:8px">英语估分 ' + S.exam.eng + " · 词根题答对 " + S.right + " / " + (S.right + S.wrong) + "</div>";
+  h += '<div style="margin-top:14px"><button class="btn" id="share">📸 生成分享图</button></div>';
+  h += '<div class="row"><button class="btn ghost" id="again">重开一局</button><button class="btn ghost" id="home2">回首页</button></div></div>';
+  if (S.hist.length) h += '<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:6px">你这一年的名场面</div><div style="font-size:12.5px;color:#8a6470;line-height:1.9">' + S.hist.slice(-5).map(esc).join("<br>") + "</div></div>";
+  h += '<div class="foot">考研英语上岸模拟器 · demo<br>重开一局，事件和词根题都会换</div>';
+  app.innerHTML = h;
+  document.getElementById("again").onclick = function(){ S.stage = "setup"; S.pick = 0; renderSetup(); };
+  document.getElementById("home2").onclick = renderIntro;
+  document.getElementById("share").onclick = function(){ drawShare(end, fate); };
+}
+
+/* ---------- 分享图（canvas 1080×1440，长按保存） ---------- */
+function drawShare(end, fate){
+  var c = document.createElement("canvas");
+  c.width = 1080; c.height = 1440;
+  var x = c.getContext("2d");
+  if (!x) return;
+  x.fillStyle = "#EDD1D8"; x.fillRect(0, 0, 1080, 1440);
+  x.fillStyle = "#ffffff"; roundRect(x, 60, 120, 960, 1200, 40); x.fill();
+  x.fillStyle = "#c2708c"; x.font = "bold 54px KaiTi, serif"; x.textAlign = "center";
+  x.fillText("考研英语上岸模拟器", 540, 250);
+  x.fillStyle = "#8a6470"; x.font = "30px sans-serif";
+  x.fillText("你的考研命 · 已结算", 540, 310);
+  x.font = "150px serif"; x.fillText(end.e, 540, 480);
+  x.fillStyle = "#4a2b35"; x.font = "bold 88px KaiTi, serif";
+  x.fillText(end.t, 540, 640);
+  x.fillStyle = "#5d414b"; x.font = "34px sans-serif";
+  wrapText(x, end.d.replace(/<br>/g, " "), 540, 720, 860, 50);
+  x.fillStyle = "#fbeef2"; roundRect(x, 140, 860, 800, 150, 30); x.fill();
+  x.fillStyle = "#c2708c"; x.font = "bold 36px sans-serif";
+  x.fillText(fate, 540, 930);
+  if (!end.quit && S.exam) x.fillText("英语估分 " + S.exam.eng + " · 词根题答对 " + S.right + " 题", 540, 985);
+  var s = S.st, bars = [["心态", s.x, "#e8a33d"], ["进度", s.p, "#c2708c"], ["头发", s.h, "#7f8fb5"], ["存款", s.m, "#5da27a"]];
+  bars.forEach(function(b, i){
+    var y = 1090 + i * 62;
+    x.textAlign = "left"; x.fillStyle = "#8a6470"; x.font = "30px sans-serif";
+    x.fillText(b[0], 180, y + 12);
+    x.fillStyle = "#f6e7ec"; roundRect(x, 300, y - 12, 560, 26, 13); x.fill();
+    x.fillStyle = b[2]; roundRect(x, 300, y - 12, 560 * clamp(b[1], 0, 100) / 100, 26, 13); x.fill();
+    x.fillStyle = "#4a2b35"; x.fillText(String(Math.round(b[1])), 900, y + 12);
+  });
+  x.textAlign = "center"; x.fillStyle = "#a98492"; x.font = "28px sans-serif";
+  x.fillText("截个图，@ 一个正在考研的人", 540, 1350);
+  var url;
+  try { url = c.toDataURL("image/png"); } catch(e){ return; }
+  var img = document.createElement("img");
+  img.src = url; img.style.display = "block"; img.style.width = "100%"; img.style.borderRadius = "14px"; img.style.marginTop = "10px";
+  document.querySelector(".card").appendChild(img);
+  img.scrollIntoView({block:"center"});
+}
+function roundRect(x, a, b, w, h2, r){
+  x.beginPath();
+  x.moveTo(a + r, b);
+  x.arcTo(a + w, b, a + w, b + h2, r);
+  x.arcTo(a + w, b + h2, a, b + h2, r);
+  x.arcTo(a, b + h2, a, b, r);
+  x.arcTo(a, b, a + w, b, r);
+  x.closePath();
+}
+function wrapText(x, text, cx, y, maxW, lh){
+  var line = "", yy = y;
+  for (var i = 0; i < text.length; i++){
+    var t = line + text[i];
+    if (x.measureText(t).width > maxW){ x.fillText(line, cx, yy); line = text[i]; yy += lh; }
+    else line = t;
+  }
+  if (line) x.fillText(line, cx, yy);
+}
+
+renderIntro();
+</script>
+</body>
+</html>
